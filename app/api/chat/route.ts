@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
+import { rag_retrieve } from "@/rag/rag_agent";
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,8 +32,10 @@ export async function POST(request: NextRequest) {
 
     if (userMsgError) throw userMsgError;
 
+    const context = await rag_retrieve(prompt);
+
     // Build the AI prompt with image context if provided
-    let systemPrompt = `You are TechHelper, an AI expert for troubleshooting device and equipment issues. 
+    let systemPrompt = `You are TechHelper, A troubleshoot agent, an AI expert for troubleshooting device and equipment issues.  
 You help users diagnose and fix problems with routers, computers, phones, and other electronic devices.
 When users share images, carefully analyze them to identify potential issues like:
 - Unplugged cables or power adapters
@@ -42,7 +45,10 @@ When users share images, carefully analyze them to identify potential issues lik
 - Physical damage or misalignment
 - Incorrect settings or configurations
 
-Provide clear, step-by-step advice to resolve issues. Be friendly and patient.`;
+Provide clear, step-by-step advice to resolve issues. Be friendly and patient.
+- try to answer using the below context if relevant, If context is not sufficient, then you can use "web_search" tool for getting information from web.
+Here is your context : ${context}
+`;
 
     let userPrompt = prompt;
     if (imageUrl) {
@@ -54,6 +60,9 @@ Provide clear, step-by-step advice to resolve issues. Be friendly and patient.`;
       model: google("gemini-2.5-flash"),
       system: systemPrompt,
       prompt: userPrompt,
+      tools: {
+        web_search: google.tools.googleSearch({})
+      }
     });
 
     // Save AI response to database
