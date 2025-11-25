@@ -30,12 +30,6 @@ export default function SignUpPage() {
     setIsLoading(true);
     setError(null);
 
-    if (password !== repeatPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -120,7 +114,7 @@ export default function SignUpPage() {
             disabled={isLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Loading..." : "Sign In"}
+            {isLoading ? "Loading..." : "Sign Up"}
           </button>
         </form>
 
